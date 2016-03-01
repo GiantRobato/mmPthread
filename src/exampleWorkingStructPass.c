@@ -5,19 +5,15 @@
 
 #define MATRIX_SIZE 16
 #define NUM_THREADS 8
-//Number of resolution loops
-#define LOOPS		5
 
 //Used for random number generation
 #define RAN 10
-
-//uncomment the life below to see debug options
-//#define DEBUG
 
 //Function definitions
 void fillMatrix(double ** m);
 void sliceMatrix(double*** threadData, double ** data);
 void* threadFunction(void *chunk);
+void* testFunction(void *data);
 
 typedef struct sThreadData{
 	double ** a;
@@ -25,9 +21,11 @@ typedef struct sThreadData{
 	double ** c;
 } sThreadData;
 
-int main(void) {
-	clock_t t;
+typedef struct tmpData{
+	double ** d;
+} tmpData;
 
+int main(void) {
 	//seed random number generator
 	srand(time(NULL));
 
@@ -70,10 +68,14 @@ int main(void) {
 	* 2 Create threads
 	* 3 Start Timer
 	* 4 Start Matrix Multiply with slice data for each pthread
-	* 5 Repeat steps 4 for number of resolution loops
-	* 6 Stop Timer
-	* 7 Display Data
+	* 5 Stop Timer
+	* 6 Repeat steps 3-5 for number of resolution loops
+	* 7 Display Time
 	****************************************************************/
+
+	//create pthreads
+	pthread_t *threads;
+	threads = (pthread_t*)malloc(sizeof(pthread_t)*NUM_THREADS);
 
 	//create containers for pthread input data
 	//so we can do aThreadData[i] - pointer to matrix of size
@@ -94,13 +96,9 @@ int main(void) {
 		cThreadData[i] = (double **)malloc((MATRIX_SIZE/NUM_THREADS)*sizeof(double*));
 	}
 
-	/****************************************************************
-	* 1 Convert data into slices
-	*	-slice data
-	*	-attach data into tData struct
-	*	-DEBUG display before Data
-	****************************************************************/
+	//reference previously made data
 
+	//slices data matrix a into list of Matrices for pthreading
 	sliceMatrix(aThreadData, a);
 	sliceMatrix(bThreadData, b);
 	sliceMatrix(cThreadData, c);
@@ -114,11 +112,10 @@ int main(void) {
 		tData[i].c = cThreadData[i];
 	}
 
-	/****************************************************************
-	* DEBUG - display before Data
-	****************************************************************/
-	#ifdef DEBUG
-	printf("Data stored in A: \n");
+	//Do this for a certain number of resolution loops
+	//DEBUG
+
+	printf("Data stored: \n");
 	for(int i = 0; i < MATRIX_SIZE; i++){
 		for(int j = 0; j < MATRIX_SIZE; j++){
 			printf("%.2f ",a[i][j]);			
@@ -126,81 +123,27 @@ int main(void) {
 		printf("\n");
 	}
 
-	printf("\nData stored in B: \n");
-	for(int i = 0; i < MATRIX_SIZE; i++){
-		for(int j = 0; j < MATRIX_SIZE; j++){
-			printf("%.2f ",b[i][j]);			
-		}
-		printf("\n");
+	testFunction(&tData[0]);
+
+	//run threads
+
+	if(pthread_create(&threads[0],NULL,threadFunction, &tData[0])){
+		printf("Error creating thread!\n");
+		return 1;
 	}
 
-	printf("\nData stored in C: \n");
-	for(int i = 0; i < MATRIX_SIZE; i++){
-		for(int j = 0; j < MATRIX_SIZE; j++){
-			printf("%.2f ",c[i][j]);			
-		}
-		printf("\n");
+
+	//wait for pthread to finish
+	if(pthread_join(threads[0],NULL)){
+		printf("Error joining thread\n");
+		return 2;
 	}
-	#endif
-	/****************************************************************
-	* END DEBUG - display before Data
-	****************************************************************/
-
-	/****************************************************************
-	* 2 Create threads
-	*	-initialize pthread for number of threads
-	****************************************************************/
-
-	pthread_t *threads;
-	threads = (pthread_t*)malloc(sizeof(pthread_t)*NUM_THREADS);
-
-	/****************************************************************
-	* 3 Start Timer
-	****************************************************************/
-
-	t = clock();
 	
-	/****************************************************************
-	* 4 Start Matrix Multiply with slice data for each pthread
-	*	-run for number of resolution loops
-	*	-start each thread
-	*	-wait for each thread to finish
-	****************************************************************/
-	for(int loop = 0; loop < LOOPS; loop++){
-		for(int i = 0; i < NUM_THREADS; i++){
-			if(pthread_create(&threads[i],NULL,threadFunction, &tData[i])){
-				printf("Error creating thread!\n");
-				return 1;
-			}
-		}
 
-		//wait for all threads to finish
-		for(int i = 0; i < NUM_THREADS; i++){
-			if(pthread_join(threads[i],NULL)){
-				printf("Error joining thread\n");
-				return 2;
-			}
-		}
-	}  //End Resolution Loops
-
-	/****************************************************************
-	* 6 Stop Timer
-	****************************************************************/
-
-	t = clock() - t;
-
-	/****************************************************************
-	* 7 Display Data
-	*	-print total time
-	*	-print number of elements
-	*	-print 
-	****************************************************************/
-
-	double totalTime;
-	totalTime = ((double)(t)/(double)CLOCKS_PER_SEC);
+	//for each thread
+	for(int i = 0; i < NUM_THREADS; i++){
 	
-	printf("Total compute time =%.3e seconds \n\n",totalTime);
-	printf("Matrix Size = %d-by-%d \n\n",MATRIX_SIZE,MATRIX_SIZE);
+	}
 
 	//cleanup
 	free(a);
@@ -258,5 +201,20 @@ void* threadFunction(void *chunk){
 		}
 	}
 
+	return NULL;
+}
+
+void* testFunction(void *data){
+	sThreadData* sTD = (sThreadData *) data;
+
+	printf("Data stored: \n");
+	for(int i = 0; i < MATRIX_SIZE/NUM_THREADS; i++){
+		for(int j = 0; j < MATRIX_SIZE; j++){
+//			printf("%.2f ",(*sTD).a[i][j]);
+			printf("%.2f ",sTD->a[i][j]);
+		}
+		printf("\n");
+	}
+	
 	return NULL;
 }

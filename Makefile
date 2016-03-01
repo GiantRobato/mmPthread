@@ -14,5 +14,9 @@ obj/main.o: src/main.c
 
 clean:
 	rm -rf obj/*.o
-	rm -rf bin/main 
+	rm -rf bin/main
 	rm -rf bin/
+
+run:
+	clear
+	./bin/main
