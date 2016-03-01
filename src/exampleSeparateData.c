@@ -4,15 +4,13 @@
 #include <time.h>
 
 #define MATRIX_SIZE 16
-#define NUM_THREADS 8
+#define NUM_THREADS 4
 
 //Used for random number generation
 #define RAN 10
 
 //Function definitions
 void fillMatrix(double ** m);
-void sliceMatrix(double*** threadData, double ** data);
-
 
 int main(void) {
 	//seed random number generator
@@ -48,18 +46,10 @@ int main(void) {
 	//Fill with random data
 	fillMatrix(a);
 	fillMatrix(b);
+	fillMatrix(c);
 
 	/****************************************************************
 	* threading code
-	* Pseudo-Code
-	*
-	* 1 Convert data into slices
-	* 2 Create threads
-	* 3 Start Timer
-	* 4 Start Matrix Multiply with slice data for each pthread
-	* 5 Stop Timer
-	* 6 Repeat steps 3-5 for number of resolution loops
-	* 7 Display Time
 	****************************************************************/
 
 	//create pthreads
@@ -77,22 +67,14 @@ int main(void) {
 		aThreadData[i] = (double **)malloc((MATRIX_SIZE/NUM_THREADS)*sizeof(double*));
 	}
 
+	//fill Data
+	int k = 0;
 	for(int i = 0; i < NUM_THREADS; i++){
-		bThreadData[i] = (double **)malloc((MATRIX_SIZE/NUM_THREADS)*sizeof(double*));
+		for(int j = 0; j < MATRIX_SIZE/NUM_THREADS; j++){
+			aThreadData[i][j] = a[k++];
+		}
 	}
 
-	for(int i = 0; i < NUM_THREADS; i++){
-		cThreadData[i] = (double **)malloc((MATRIX_SIZE/NUM_THREADS)*sizeof(double*));
-	}
-
-	//reference previously made data
-
-	//slices data matrix a into list of Matrices for pthreading
-	sliceMatrix(aThreadData, a);
-	sliceMatrix(bThreadData, b);
-	sliceMatrix(cThreadData, c);
-
-	//Do this for a certain number of resolution loops
 	//DEBUG
 
 	printf("Data stored: \n");
@@ -114,6 +96,17 @@ int main(void) {
 		}
 	}
 
+
+	//create container for each slice of the data
+	//double ** aMatSlice = (double **)malloc((MATRIX_SIZE/NUM_THREADS)*sizeof(double *));
+	//double ** bMatSlice = (double **)malloc((MATRIX_SIZE/NUM_THREADS)*sizeof(double *));
+	//double ** cMatSlice = (double **)malloc((MATRIX_SIZE/NUM_THREADS)*sizeof(double *));
+//	double ** aMatSlice = (double **)malloc((MATRIX_SIZE/NUM_THREADS)*sizeof(double *));
+//	double ** bMatSlice = (double **)malloc((MATRIX_SIZE/NUM_THREADS)*sizeof(double *));
+//	double ** cMatSlice = (double **)malloc((MATRIX_SIZE/NUM_THREADS)*sizeof(double *));
+
+
+
 	//for each thread
 	for(int i = 0; i < NUM_THREADS; i++){
 	
@@ -131,16 +124,8 @@ int main(void) {
 	for(int i = 0; i < NUM_THREADS; i++){
 		free(aThreadData[i]);
 	}
-	for(int i = 0; i < NUM_THREADS; i++){
-		free(bThreadData[i]);
-	}
-	for(int i = 0; i < NUM_THREADS; i++){
-		free(cThreadData[i]);
-	}
 
-	free(aThreadData);
-	free(bThreadData);
-	free(cThreadData);
+
 
 	return 0;
 }
@@ -149,15 +134,6 @@ void fillMatrix(double **m){
 	for(int i = 0; i < MATRIX_SIZE; i++){
 		for(int j = 0; j < MATRIX_SIZE; j++){
 			m[i][j] = (1 + rand() % RAN);
-		}
-	}
-}
-
-void sliceMatrix(double*** threadData, double ** data){
-	int k = 0;
-	for(int i = 0; i < NUM_THREADS; i++){
-		for(int j = 0; j < MATRIX_SIZE/NUM_THREADS; j++){
-			threadData[i][j] = data[k++];
 		}
 	}
 }

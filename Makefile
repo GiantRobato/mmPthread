@@ -1,4 +1,4 @@
-CXX = gcc
+CXX = g++
 CXXFLAGS = -lpthread
 OBJS= obj/main.o
 
