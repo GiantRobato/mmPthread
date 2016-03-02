@@ -4,10 +4,10 @@
 #include <time.h>
 #include <sys/time.h>
 
-#define MATRIX_SIZE 512
-#define NUM_THREADS 6
+#define MATRIX_SIZE 64
+#define NUM_THREADS 8
 //Number of resolution loops
-#define LOOPS		1
+#define LOOPS		100
 
 //Used for random number generation
 #define RAN 10
@@ -227,17 +227,16 @@ int main(void) {
 	* END DEBUG - display before Data
 	****************************************************************/
 
-	double totalTime;
-	totalTime = ((double)(t)/(double)CLOCKS_PER_SEC);
+	double avgTime = elapsed/((double)LOOPS);
 
-	double totalTime2;
-	totalTime2 = ((double)(secPast));
-		
-	printf("Total compute time using clock =%.3e seconds \n",totalTime);
-	printf("Total compute time using time_t =%.3e seconds \n\n", totalTime2);
-	printf("Total compute time using clock_gettime =%.3e seconds \n\n", elapsed);
 	printf("Number of threads: %d\n", NUM_THREADS);
-	printf("Matrix Size = %d-by-%d \n\n",MATRIX_SIZE,MATRIX_SIZE);
+	printf("Matrix Size: %d-by-%d \n",MATRIX_SIZE,MATRIX_SIZE);
+	printf("Number of Resolution Loops: %d\n\n",LOOPS);
+//	printf("Total compute time using clock =%.3e seconds \n",totalTime);
+//	printf("Total compute time using time_t =%.3e seconds \n\n", totalTime2);
+	printf("Total compute time: %.3e seconds \n\n", elapsed);
+	printf("Average Time per Matrix: %.3e\n",elapsed/(double)LOOPS);
+	printf("Number of OPS: %.3e\n", ((double)(MATRIX_SIZE*MATRIX_SIZE*4))/avgTime);
 
 	//cleanup
 	free(a);
