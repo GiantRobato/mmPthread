@@ -2,11 +2,12 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <time.h>
+#include <sys/time.h>
 
-#define MATRIX_SIZE 16
-#define NUM_THREADS 8
+#define MATRIX_SIZE 8192
+#define NUM_THREADS 32
 //Number of resolution loops
-#define LOOPS		5
+#define LOOPS		10
 
 //Used for random number generation
 #define RAN 10
@@ -158,7 +159,15 @@ int main(void) {
 	* 3 Start Timer
 	****************************************************************/
 
+//	struct timeval stop,start;
+//	gettimeofday(&start,NULL);
 	t = clock();
+	time_t secPast = time(NULL);
+
+	struct timespec start,finish;
+	double elapsed;
+	clock_gettime(CLOCK_MONOTONIC, &start);
+
 	
 	/****************************************************************
 	* 4 Start Matrix Multiply with slice data for each pthread
@@ -188,6 +197,12 @@ int main(void) {
 	****************************************************************/
 
 	t = clock() - t;
+	secPast = time(NULL) - secPast;
+//	gettimeofday(&stop,NULL);
+	clock_gettime(CLOCK_MONOTONIC, &finish);
+
+	elapsed = (finish.tv_sec - start.tv_sec);
+	elapsed += (finish.tv_nsec - start.tv_nsec)/1000000000.0;
 
 	/****************************************************************
 	* 7 Display Data
@@ -196,10 +211,36 @@ int main(void) {
 	*	-print 
 	****************************************************************/
 
+	/****************************************************************
+	* DEBUG - display after Data
+	****************************************************************/
+	#ifdef DEBUG
+
+	printf("\nData after mm: \n");
+	for(int i = 0; i < MATRIX_SIZE; i++){
+		for(int j = 0; j < MATRIX_SIZE; j++){
+			printf("%.2f ",c[i][j]);			
+		}
+		printf("\n");
+	}
+	#endif
+	/****************************************************************
+	* END DEBUG - display before Data
+	****************************************************************/
+
 	double totalTime;
 	totalTime = ((double)(t)/(double)CLOCKS_PER_SEC);
+
+	double totalTime2;
+	totalTime2 = ((double)(secPast));
 	
-	printf("Total compute time =%.3e seconds \n\n",totalTime);
+//	long totalTime3;
+//	totalTime3 = (stop.tv_sec - start.tv_sec) + ((stop.tv_usec - start.tv_usec)/1000000.0) + .5;
+	
+	printf("Total compute time using clock =%.3e seconds \n",totalTime);
+	printf("Total compute time using time_t =%.3e seconds \n\n", totalTime2);
+	printf("Total compute time using clock_gettime =%.3e seconds \n\n", elapsed);
+	printf("Number of threads: %d\n", NUM_THREADS);
 	printf("Matrix Size = %d-by-%d \n\n",MATRIX_SIZE,MATRIX_SIZE);
 
 	//cleanup

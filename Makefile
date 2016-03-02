@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -lpthread
+CXXFLAGS = -lpthread -O0
 OBJS= obj/main.o
 
 all: $(OBJS) main 
