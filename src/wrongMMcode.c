@@ -4,8 +4,8 @@
 #include <time.h>
 #include <sys/time.h>
 
-#define MATRIX_SIZE 16384
-#define NUM_THREADS 32
+#define MATRIX_SIZE 1024
+#define NUM_THREADS 1
 //Number of resolution loops
 #define LOOPS		100
 
@@ -114,9 +114,9 @@ int main(void) {
 	sThreadData *tData = (sThreadData*)malloc(NUM_THREADS*sizeof(sThreadData));
 
 	for(int i = 0; i < NUM_THREADS; i++){
-		tData[i].a = aThreadData[i];
-		tData[i].b = bThreadData[i];
-		tData[i].c = cThreadData[i];
+		tData[i].a = a;
+		tData[i].b = b;
+		tData[i].c = c;
 	}
 
 	/****************************************************************
@@ -310,22 +310,14 @@ void sliceMatrix(double*** threadData, double ** data){
 
 void* threadFunction(void *chunk){
 	sThreadData *sTD = (sThreadData *) chunk;
-	pthread_mutex_lock(&lock);
-//	printf("numThreads is: %d\n",++numThreads);
-	pthread_mutex_unlock(&lock);
 
-	//Matrix multiply
-	int i;
-	int j;
-	for(i = 0; i < MATRIX_SIZE/NUM_THREADS; i++){
-		for(j = 0; j < MATRIX_SIZE; j++){
-			sTD->c[i][j] = sTD->a[i][j]*sTD->b[i][j];
+	for(int i = sTD->colStart; i < (1+sTD->colStart)*MATRIX_SIZE/NUM_THREADS ; i++){
+		for(int j = 0; j < MATRIX_SIZE; j++){
+			for(int k = 0; k < MATRIX_SIZE; k++){
+				sTD->c[i][j] += sTD->a[i][k]*sTD[k][j];
+			}
 		}
 	}
-
-	pthread_mutex_lock(&lock);
-//	printf("numThreads is: %d\n",--numThreads);
-	pthread_mutex_unlock(&lock);
 
 
 	return NULL;
