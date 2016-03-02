@@ -4,16 +4,16 @@
 #include <time.h>
 #include <sys/time.h>
 
-#define MATRIX_SIZE 16384
-#define NUM_THREADS 32
+#define MATRIX_SIZE 8
+#define NUM_THREADS 1
 //Number of resolution loops
-#define LOOPS		100
+#define LOOPS		1
 
 //Used for random number generation
 #define RAN 10
 
 //uncomment the life below to see debug options
-//#define DEBUG
+#define DEBUG
 
 volatile int numThreads = 0;
 
@@ -126,7 +126,7 @@ int main(void) {
 	printf("Data stored in A: \n");
 	for(int i = 0; i < MATRIX_SIZE; i++){
 		for(int j = 0; j < MATRIX_SIZE; j++){
-			printf("%.2f ",a[i][j]);			
+			printf("%.2f\t",a[i][j]);			
 		}
 		printf("\n");
 	}
@@ -134,7 +134,7 @@ int main(void) {
 	printf("\nData stored in B: \n");
 	for(int i = 0; i < MATRIX_SIZE; i++){
 		for(int j = 0; j < MATRIX_SIZE; j++){
-			printf("%.2f ",b[i][j]);			
+			printf("%.2f\t",b[i][j]);			
 		}
 		printf("\n");
 	}
@@ -142,7 +142,7 @@ int main(void) {
 	printf("\nData stored in C: \n");
 	for(int i = 0; i < MATRIX_SIZE; i++){
 		for(int j = 0; j < MATRIX_SIZE; j++){
-			printf("%.2f ",c[i][j]);			
+			printf("%.2f\t",c[i][j]);			
 		}
 		printf("\n");
 	}
@@ -238,7 +238,7 @@ int main(void) {
 	printf("\nData after mm: \n");
 	for(int i = 0; i < MATRIX_SIZE; i++){
 		for(int j = 0; j < MATRIX_SIZE; j++){
-			printf("%.2f ",c[i][j]);			
+			printf("%.2f\t",c[i][j]);			
 		}
 		printf("\n");
 	}
