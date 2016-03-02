@@ -15,6 +15,8 @@
 //uncomment the life below to see debug options
 //#define DEBUG
 
+volatile int numThreads = 0;
+
 //Function definitions
 void fillMatrix(double ** m);
 void sliceMatrix(double*** threadData, double ** data);
@@ -25,6 +27,8 @@ typedef struct sThreadData{
 	double ** b;
 	double ** c;
 } sThreadData;
+
+pthread_mutex_t lock;
 
 int main(void) {
 	clock_t t;
@@ -175,9 +179,18 @@ int main(void) {
 	*	-start each thread
 	*	-wait for each thread to finish
 	****************************************************************/
+	if(pthread_mutex_init(&lock, NULL) != 0){
+		printf("\nMUTEX init FAILED\n");
+		return 1;
+	}
+
+
 	for(int loop = 0; loop < LOOPS; loop++){
+		//lock shared resource
+		
+
 		for(int i = 0; i < NUM_THREADS; i++){
-			if(pthread_create(&threads[i],NULL,threadFunction, &tData[i])){
+			if(pthread_create(&(threads[i]),NULL,threadFunction, &(tData[i]))){
 				printf("Error creating thread!\n");
 				return 1;
 			}
@@ -190,7 +203,13 @@ int main(void) {
 				return 2;
 			}
 		}
+
+		while(numThreads > 0){
+			//wait till numThreads gets to zero
+		}
 	}  //End Resolution Loops
+
+	pthread_mutex_destroy(&lock);
 
 	/****************************************************************
 	* 6 Stop Timer
@@ -291,13 +310,23 @@ void sliceMatrix(double*** threadData, double ** data){
 
 void* threadFunction(void *chunk){
 	sThreadData *sTD = (sThreadData *) chunk;
+	pthread_mutex_lock(&lock);
+	printf("numThreads is: %d\n",++numThreads);
+	pthread_mutex_unlock(&lock);
 
 	//Matrix multiply
-	for(int i = 0; i < MATRIX_SIZE/NUM_THREADS; i++){
-		for(int j = 0; j < MATRIX_SIZE; j++){
+	int i;
+	int j;
+	for(i = 0; i < MATRIX_SIZE/NUM_THREADS; i++){
+		for(j = 0; j < MATRIX_SIZE; j++){
 			sTD->c[i][j] = sTD->a[i][j]*sTD->b[i][j];
 		}
 	}
+
+	pthread_mutex_lock(&lock);
+	printf("numThreads is: %d\n",--numThreads);
+	pthread_mutex_unlock(&lock);
+
 
 	return NULL;
 }
