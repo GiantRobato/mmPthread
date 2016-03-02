@@ -4,8 +4,8 @@
 #include <time.h>
 #include <sys/time.h>
 
-#define MATRIX_SIZE 1024
-#define NUM_THREADS 1
+#define MATRIX_SIZE 512
+#define NUM_THREADS 6
 //Number of resolution loops
 #define LOOPS		1
 
@@ -81,35 +81,12 @@ int main(void) {
 	* 7 Display Data
 	****************************************************************/
 
-	//create containers for pthread input data
-	//so we can do aThreadData[i] - pointer to matrix of size
-	//SIZE/NUM_THREADS by SIZE
-	double *** aThreadData = (double ***)malloc(NUM_THREADS*sizeof(double **));
-	double *** bThreadData = (double ***)malloc(NUM_THREADS*sizeof(double **));
-	double *** cThreadData = (double ***)malloc(NUM_THREADS*sizeof(double **));
-
-	for(int i = 0; i < NUM_THREADS; i++){
-		aThreadData[i] = (double **)malloc((MATRIX_SIZE/NUM_THREADS)*sizeof(double*));
-	}
-
-	for(int i = 0; i < NUM_THREADS; i++){
-		bThreadData[i] = (double **)malloc((MATRIX_SIZE/NUM_THREADS)*sizeof(double*));
-	}
-
-	for(int i = 0; i < NUM_THREADS; i++){
-		cThreadData[i] = (double **)malloc((MATRIX_SIZE/NUM_THREADS)*sizeof(double*));
-	}
-
 	/****************************************************************
 	* 1 Convert data into slices
 	*	-slice data
 	*	-attach data into tData struct
 	*	-DEBUG display before Data
 	****************************************************************/
-
-	sliceMatrix(aThreadData, a);
-	sliceMatrix(bThreadData, b);
-	sliceMatrix(cThreadData, c);
 
 	//Create structs of data
 	sThreadData *tData = (sThreadData*)malloc(NUM_THREADS*sizeof(sThreadData));
@@ -165,8 +142,6 @@ int main(void) {
 	* 3 Start Timer
 	****************************************************************/
 
-//	struct timeval stop,start;
-//	gettimeofday(&start,NULL);
 	t = clock();
 	time_t secPast = time(NULL);
 
@@ -181,31 +156,25 @@ int main(void) {
 	*	-start each thread
 	*	-wait for each thread to finish
 	****************************************************************/
-	if(pthread_mutex_init(&lock, NULL) != 0){
-		printf("\nMUTEX init FAILED\n");
-		return 1;
-	}
-
-
-	int colStart = 0;
-	double sum = 0;
-	for(int i = colStart; i < colStart + (MATRIX_SIZE/NUM_THREADS) ; i++){
-		for(int j = 0; j < MATRIX_SIZE/NUM_THREADS; j++){
-			for(int k = 0; k < MATRIX_SIZE; k++){
-				sum += a[i][k]*b[k][j];
-//				printf("A[i][k] = %f\tB[k][j] =%f\n",a[i][k],b[k][j]);
+/*
+//	for(int colStart = 0; colStart < NUM_THREADS; colStart++){
+		int colStart = 1;
+		double sum = 0;
+		for(int i = colStart; i < (colStart+1)*(MATRIX_SIZE/NUM_THREADS); i++){
+			for(int j = 0; j < MATRIX_SIZE; j++){
+				for(int k = 0; k < MATRIX_SIZE; k++){
+					sum += a[i][k]*b[k][j];
+				}
+				c[i][j] = sum;
+				sum = 0;
 			}
-//			printf("row: %d\tcol: %d\tsum: %f\n",i,j, sum);
 		}
-		sum = 0;
-	}
-
-
-
+//	}
+*/
+	
 	for(int loop = 0; loop < LOOPS; loop++){
 		//lock shared resource
 		
-
 		for(int i = 0; i < NUM_THREADS; i++){
 			if(pthread_create(&(threads[i]),NULL,threadFunction, &(tData[i]))){
 				printf("Error creating thread!\n");
@@ -221,12 +190,7 @@ int main(void) {
 			}
 		}
 
-		while(numThreads > 0){
-			//wait till numThreads gets to zero
-		}
 	}  //End Resolution Loops
-
-	pthread_mutex_destroy(&lock);
 
 	/****************************************************************
 	* 6 Stop Timer
@@ -234,7 +198,6 @@ int main(void) {
 
 	t = clock() - t;
 	secPast = time(NULL) - secPast;
-//	gettimeofday(&stop,NULL);
 	clock_gettime(CLOCK_MONOTONIC, &finish);
 
 	elapsed = (finish.tv_sec - start.tv_sec);
@@ -269,10 +232,7 @@ int main(void) {
 
 	double totalTime2;
 	totalTime2 = ((double)(secPast));
-	
-//	long totalTime3;
-//	totalTime3 = (stop.tv_sec - start.tv_sec) + ((stop.tv_usec - start.tv_usec)/1000000.0) + .5;
-	
+		
 	printf("Total compute time using clock =%.3e seconds \n",totalTime);
 	printf("Total compute time using time_t =%.3e seconds \n\n", totalTime2);
 	printf("Total compute time using clock_gettime =%.3e seconds \n\n", elapsed);
@@ -287,20 +247,6 @@ int main(void) {
 	free(bBlock);
 	free(cBlock);
 	free(threads);
-
-	for(int i = 0; i < NUM_THREADS; i++){
-		free(aThreadData[i]);
-	}
-	for(int i = 0; i < NUM_THREADS; i++){
-		free(bThreadData[i]);
-	}
-	for(int i = 0; i < NUM_THREADS; i++){
-		free(cThreadData[i]);
-	}
-
-	free(aThreadData);
-	free(bThreadData);
-	free(cThreadData);
 
 	free(tData);
 
@@ -327,15 +273,15 @@ void sliceMatrix(double*** threadData, double ** data){
 
 void* threadFunction(void *chunk){
 	sThreadData *sTD = (sThreadData *) chunk;
-
-	for(int i = sTD->colStart; i < (sTD->colStart+1)*(MATRIX_SIZE/NUM_THREADS); i++){
+	double sum = 0;
+	for(int i = (sTD->colStart)*(MATRIX_SIZE/NUM_THREADS); i < (sTD->colStart+1)*(MATRIX_SIZE/NUM_THREADS); i++){
 		for(int j = 0; j < MATRIX_SIZE; j++){
 			for(int k = 0; k < MATRIX_SIZE; k++){
-				sTD->c[i][j] += sTD->a[i][k]*sTD->b[k][j];
+				sum += sTD->a[i][k]*sTD->b[k][j];
 			}
+			sTD->c[i][j] = sum;
+			sum = 0;
 		}
 	}
-
-
 	return NULL;
 }

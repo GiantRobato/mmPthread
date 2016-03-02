@@ -19,4 +19,4 @@ clean:
 
 run:
 	clear
-	./bin/main
+	nice -n 0 ./bin/main
