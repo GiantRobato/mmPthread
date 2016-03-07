@@ -1,3 +1,14 @@
+/********************************************************************
+*	License: MIT License (Dustin Mendoza)
+*
+*	Filename: main.c
+*	Author:	Dustin Mendoza
+*	Date: 3/7/16
+*	Description: This program implements Matrix Multiply (Row times 
+*	Columns) with pthreads
+*
+********************************************************************/
+
 #include <stdio.h>
 #include <pthread.h>
 #include <stdlib.h>
@@ -6,8 +17,7 @@
 
 #define MATRIX_SIZE 64
 #define NUM_THREADS 8
-//Number of resolution loops
-#define LOOPS		100
+#define LOOPS		100 //Number of resolution loops
 
 //Used for random number generation
 #define RAN 10
@@ -33,9 +43,7 @@ pthread_mutex_t lock;
 
 int main(void) {
 	clock_t t;
-
-	//seed random number generator
-	srand(time(NULL));
+	srand(time(NULL));	//seed random number generator
 
 	//create data
 	double **a, **b, **c;
@@ -156,25 +164,9 @@ int main(void) {
 	*	-start each thread
 	*	-wait for each thread to finish
 	****************************************************************/
-/*
-//	for(int colStart = 0; colStart < NUM_THREADS; colStart++){
-		int colStart = 1;
-		double sum = 0;
-		for(int i = colStart; i < (colStart+1)*(MATRIX_SIZE/NUM_THREADS); i++){
-			for(int j = 0; j < MATRIX_SIZE; j++){
-				for(int k = 0; k < MATRIX_SIZE; k++){
-					sum += a[i][k]*b[k][j];
-				}
-				c[i][j] = sum;
-				sum = 0;
-			}
-		}
-//	}
-*/
 	
 	for(int loop = 0; loop < LOOPS; loop++){
-		//lock shared resource
-		
+		//Start threads
 		for(int i = 0; i < NUM_THREADS; i++){
 			if(pthread_create(&(threads[i]),NULL,threadFunction, &(tData[i]))){
 				printf("Error creating thread!\n");
@@ -232,8 +224,6 @@ int main(void) {
 	printf("Number of threads: %d\n", NUM_THREADS);
 	printf("Matrix Size: %d-by-%d \n",MATRIX_SIZE,MATRIX_SIZE);
 	printf("Number of Resolution Loops: %d\n\n",LOOPS);
-//	printf("Total compute time using clock =%.3e seconds \n",totalTime);
-//	printf("Total compute time using time_t =%.3e seconds \n\n", totalTime2);
 	printf("Total compute time: %.3e seconds \n\n", elapsed);
 	printf("Average Time per Matrix: %.3e\n",elapsed/(double)LOOPS);
 	printf("Number of OPS: %.3e\n", ((double)(MATRIX_SIZE*MATRIX_SIZE*4))/avgTime);

@@ -1,2 +1,7 @@
 # mmPthread
-matrix multiply with pthread
+
+Description
+==========
+Matrix Multiply using pthreads in C
+
+
